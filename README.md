@@ -34,5 +34,12 @@
 把目标丢在target.txt文件，然后如果没有什么特殊配置，直接运行./shiro_check.exe或者./shiro_check即可
 ![image](https://user-images.githubusercontent.com/65237278/193421646-43c70423-295e-4db6-9aeb-a18c886c6fae.png)
 
+## 编译（如果需要编译32位的或者是其他操作系统请自行编译）
+>go mod tidy
+
+>go env -w xxx=xxx （xxx根据自己的需求进行修改）
+
+>go build -o ./
+
 ## 注意事项
 请勿对没有授权的网站进行测试
