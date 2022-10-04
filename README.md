@@ -26,13 +26,15 @@
 
 >-tk `同一个时间内爆破目标多少个Key (default 10)，建议设置为10，防止把网站给跑崩溃`
 
+>-o `保存爆破结果目录，为空表示不保存结果 (default "output")`
+
 >-x `如果需要添加其他状态码则逗号分隔（502,500）,爆破Key的时候过滤状态码防止爆破速度过快导致误报 (default "502")`
-![image](https://user-images.githubusercontent.com/65237278/193421564-13749f05-141d-4dd9-8003-0448d86d3d9c.png)
+![image](https://user-images.githubusercontent.com/65237278/193859620-cc52f624-80d0-43c6-957b-8d6de42153a7.png)
 
 如何使用呢？
 
 把目标丢在target.txt文件，然后如果没有什么特殊配置，直接运行./shiro_check.exe或者./shiro_check即可
-![image](https://user-images.githubusercontent.com/65237278/193421646-43c70423-295e-4db6-9aeb-a18c886c6fae.png)
+![image](https://user-images.githubusercontent.com/65237278/193859421-ff55af06-01cf-4272-bfdf-fb896cb944cc.png)
 
 ## 编译（如果需要编译32位的或者是其他操作系统请自行编译）
 >go mod tidy
