@@ -4,8 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -16,7 +18,7 @@ func main() {
   ___/ / / / / / /  / /_/ /  / /___/ / / /  __/ /__/ ,<   
  /____/_/ /_/_/_/   \____/   \____/_/ /_/\___/\___/_/|_|  
 												
- 				version:	1.0
+ 				version:	1.1
 				By:		Ggasdfg321	  
  `)
 	KeyFile := flag.String("fk", "key.txt", "key文件路径")
@@ -28,20 +30,37 @@ func main() {
 	Proxy := flag.String("proxy", "", "代理设置，支持http/socks5/socks4")
 	Method := flag.String("m", "get", "发送请求的模式GET/POST")
 	Params := flag.String("p", "", "设置POST请求参数,例如：username=admin&password=123456，只有POST请求的时候这个参数才有效")
+	Output := flag.String("o", "output", "保存爆破结果目录，默认为空表示不保存结果")
 	flag.Parse()
 
 	var filters []int
 	if !strings.Contains(*FilterStatus, ",") {
 		tmp, _ := strconv.Atoi(*FilterStatus)
 		filters = []int{tmp}
-	}
-	string_filters := strings.Split(*FilterStatus, ",")
-	for _, filter := range string_filters {
-		tmp, _ := strconv.Atoi(filter)
-		filters = append(filters, tmp)
+	} else {
+		string_filters := strings.Split(*FilterStatus, ",")
+		for _, filter := range string_filters {
+			tmp, _ := strconv.Atoi(filter)
+			filters = append(filters, tmp)
+		}
 	}
 
-	s := Shiro{RememberMe: *RememberMe, TargetThread: *TargetThread, KeyThread: *KeyThread, FilterStatus: filters, Proxy: *Proxy, Method: strings.ToLower(*Method), Params: *Params}
+	if *Output != "" {
+		func() {
+			_, err := os.Stat(*Output)
+			if err == nil {
+				return
+			}
+			if os.IsNotExist(err) {
+				os.Mkdir(*Output, os.ModePerm)
+				return
+			}
+			fmt.Println("[-]创建文件夹失败，请检测是否有权限创建或者手动创建")
+			os.Exit(0)
+		}()
+	}
+
+	s := Shiro{RememberMe: *RememberMe, TargetThread: *TargetThread, KeyThread: *KeyThread, FilterStatus: filters, Proxy: *Proxy, Method: strings.ToLower(*Method), Params: *Params, Output: *Output + "/" + strconv.FormatInt(time.Now().Unix(), 10) + ".txt"}
 
 	targetFile, err := ioutil.ReadFile(*TargetFile)
 	if err != nil {

