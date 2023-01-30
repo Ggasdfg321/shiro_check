@@ -224,6 +224,7 @@ func (s Shiro) AesCBCEncrypt(k string) (string, error) {
 func (s Shiro) AesGCMEncrypt(k string) (string, error) {
 	key, _ := base64.StdEncoding.DecodeString(k)
 	data := "rO0ABXNyADJvcmcuYXBhY2hlLnNoaXJvLnN1YmplY3QuU2ltcGxlUHJpbmNpcGFsQ29sbGVjdGlvbqh/WCXGowhKAwABTAAPcmVhbG1QcmluY2lwYWxzdAAPTGphdmEvdXRpbC9NYXA7eHBwdwEAeA=="
+	d, _ := base64.StdEncoding.DecodeString(data)
 	c, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
@@ -231,6 +232,6 @@ func (s Shiro) AesGCMEncrypt(k string) (string, error) {
 	nonce := make([]byte, 16)
 	io.ReadFull(rand.Reader, nonce)
 	aesgcm, _ := cipher.NewGCMWithNonceSize(c, 16)
-	ciphertext := aesgcm.Seal(nil, nonce, []byte(data), nil)
+	ciphertext := aesgcm.Seal(nil, nonce, d, nil)
 	return base64.StdEncoding.EncodeToString(append(nonce, ciphertext...)), nil
 }
